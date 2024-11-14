@@ -43,6 +43,20 @@ public class RemoteDesktopServer extends UnicastRemoteObject implements RemoteDe
         robot.mouseMove(x, y);
     }
 
+    @Override
+    public void clickMouse(int button) throws RemoteException {
+        // Nhấn và nhả nút chuột
+        robot.mousePress(button);
+        robot.mouseRelease(button);
+    }
+
+    @Override
+    public void typeKey(int keyCode) throws RemoteException {
+        // Nhấn và nhả phím với mã phím (keyCode) cụ thể
+        robot.keyPress(keyCode);
+        robot.keyRelease(keyCode);
+    }
+
     public static void startServer(int port){
         try {
             RemoteDesktopServer server = new RemoteDesktopServer();
