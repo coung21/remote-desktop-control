@@ -6,4 +6,5 @@ public interface RemoteDesktopInterface extends Remote {
     void mouseMove(int x, int y) throws RemoteException;
     void clickMouse(int button) throws RemoteException;
     void typeKey(int keyCode) throws RemoteException;
+    void scrollMouse(int scrollAmount) throws RemoteException;
 }

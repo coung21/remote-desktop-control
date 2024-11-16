@@ -29,7 +29,7 @@ public class RemoteDesktopServer extends UnicastRemoteObject implements RemoteDe
             BufferedImage screenCapture = robot.createScreenCapture(screenRect);
             
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-            ImageIO.write(screenCapture, "jpg", outputStream);
+            ImageIO.write(screenCapture, "JPEG", outputStream);
 
             return outputStream.toByteArray();
         } catch (Exception e) {
@@ -55,6 +55,12 @@ public class RemoteDesktopServer extends UnicastRemoteObject implements RemoteDe
         // Nhấn và nhả phím với mã phím (keyCode) cụ thể
         robot.keyPress(keyCode);
         robot.keyRelease(keyCode);
+    }
+
+    @Override
+    public void scrollMouse(int scrollAmount) throws RemoteException {
+        // Lăn chuột: scrollAmount là số bước lăn, có thể âm hoặc dương
+        robot.mouseWheel(scrollAmount);
     }
 
     public static void startServer(int port){

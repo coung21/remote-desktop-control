@@ -7,7 +7,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
-import java.awt.event.MouseMotionListener;
+import java.awt.event.MouseWheelListener;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.rmi.registry.LocateRegistry;
@@ -16,7 +16,7 @@ import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
-import javax.swing.Timer;
+import javax.swing.SwingUtilities;
 
 
 public class RemoteDesktopClient {
@@ -41,9 +41,20 @@ public class RemoteDesktopClient {
 
             
             // Cập nhật màn hình
-            Timer timer = new Timer(1000, e -> updateScreen());
-            timer.start();
-            // updateScreen();
+            // Timer timer = new Timer(100, e -> updateScreen());
+            // timer.start();
+            // Chạy cập nhật màn hình trên một luồng riêng
+            new Thread(() -> {
+                while (true) {
+                    updateScreen();
+                    try {
+                        Thread.sleep(100); // Cập nhật mỗi 100ms (10 lần mỗi giây)
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }).start();
+
             
             screenLabel.addMouseMotionListener(new MouseMotionAdapter() {
                 @Override
@@ -86,6 +97,19 @@ public class RemoteDesktopClient {
                 }
             });
 
+
+            // Sự kiện lăn chuột
+            screenLabel.addMouseWheelListener((MouseWheelListener) e -> {
+                try {
+                    if (remoteDesktop != null) {
+                        remoteDesktop.scrollMouse(e.getWheelRotation());
+                    }
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            });
+            
+
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -109,7 +133,9 @@ public class RemoteDesktopClient {
                  if (screenData != null) {
                      BufferedImage image = ImageIO.read(new ByteArrayInputStream(screenData));
                      if (image != null) {
-                         screenLabel.setIcon(new ImageIcon(image));
+                         SwingUtilities.invokeLater(() -> {
+                            screenLabel.setIcon(new ImageIcon(image));
+                        });
                      } else {
                          System.out.println("Failed to decode screen data to image.");
                      }
