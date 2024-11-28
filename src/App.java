@@ -1,24 +1,41 @@
-import java.awt.EventQueue;
-import java.awt.GridLayout;
+import java.awt.*;
 import java.net.InetAddress;
-import java.util.Scanner;
 import javax.swing.*;
 
 public class App extends JFrame {
 
     private JTextField ipField;
     private JTextField portField;
+    private JPasswordField passwordField;  // Thêm ô nhập password cho client
+    private JTextField serverPortField;
+    private JPasswordField serverPasswordField;  // Thêm ô nhập password cho server
     private int serverPort;
 
-    public App(){
-        setTitle("Remtoe Desktop Control App");
+    public App() {
+        setTitle("Remote Desktop Control App");
         setSize(800, 450);
         setResizable(false);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setLayout(new GridLayout(6,1));
+        
+        // Tạo một JTabbedPane để chuyển đổi giữa client và server
+        JTabbedPane tabbedPane = new JTabbedPane();
+        
+        // Giao diện server
+        JPanel serverPanel = createServerPanel();
+        tabbedPane.addTab("Server", serverPanel);
 
-        // hiển thị ip và port của máy local
+        // Giao diện client
+        JPanel clientPanel = createClientPanel();
+        tabbedPane.addTab("Client", clientPanel);
 
+        add(tabbedPane);
+    }
+
+    private JPanel createServerPanel() {
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+
+        // Hiển thị ip và port của máy local
         String localIp = "localhost";
         try {
             localIp = InetAddress.getLocalHost().getHostAddress();
@@ -26,41 +43,73 @@ public class App extends JFrame {
             e.printStackTrace();
         }
 
-        try (Scanner scanner = new Scanner(System.in)) {
-            System.out.println("Enter port for server: ");
-            serverPort = scanner.nextInt();
-        }
         JLabel ipLabel = new JLabel("Your IP: " + localIp);
-        JLabel portLabel = new JLabel("Your Port: " + serverPort);
-        add(ipLabel);
-        add(portLabel);
-    
-        // trường nhâp ip và port của partner
+        JLabel portLabel = new JLabel("Server Port: ");
+        JLabel passwordLabel = new JLabel("Password: ");
+        
+        // Trường nhập port và password cho server
+        serverPortField = new JTextField("5000");  // Giá trị mặc định là 5000
+        serverPasswordField = new JPasswordField();
 
-        ipField = new JTextField();
-        portField = new JTextField();
-
-        add(new JLabel("Partner's IP: "));
-        add(ipField);
-        add(new JLabel("Partner's Port: "));
-        add(portField);
-
-        // nút connect
-        JButton connectButton = new JButton("Connect");
-        connectButton.addActionListener(e -> connectToServer());
-        add(connectButton);
-
+        panel.add(ipLabel);
+        panel.add(portLabel);
+        panel.add(serverPortField);
+        panel.add(passwordLabel);
+        panel.add(serverPasswordField);
 
         // Khởi động server
-        new Thread(() -> {
-            RemoteDesktopServer.startServer(serverPort);
-        }).start();
+        JButton startServerButton = new JButton("Start Server");
+        startServerButton.addActionListener(e -> {
+            String password = new String(serverPasswordField.getPassword());
+            if (password.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Password cannot be empty", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            try {
+                serverPort = Integer.parseInt(serverPortField.getText());
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(this, "Invalid port number", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            new Thread(() -> {
+                RemoteDesktopServer.startServer(serverPort, password); // Gửi mật khẩu khi khởi động server
+            }).start();
+        });
+        panel.add(startServerButton);
+
+        return panel;
     }
 
-    // phương thức kết nối với server của partner
+    private JPanel createClientPanel() {
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+
+        // Trường nhập IP và Port của partner
+        ipField = new JTextField();
+        portField = new JTextField();
+        passwordField = new JPasswordField();  // Thêm trường nhập password cho client
+        
+        panel.add(new JLabel("Partner's IP: "));
+        panel.add(ipField);
+        panel.add(new JLabel("Partner's Port: "));
+        panel.add(portField);
+        panel.add(new JLabel("Server Password: "));  // Thêm label cho mật khẩu
+        panel.add(passwordField);
+        
+        // Nút Connect
+        JButton connectButton = new JButton("Connect");
+        connectButton.addActionListener(e -> connectToServer());
+        panel.add(connectButton);
+        
+        return panel;
+    }
+
+    // Phương thức kết nối với server của partner
     private void connectToServer() {
         String partnerIp = ipField.getText();
         int partnerPort;
+        String password = new String(passwordField.getPassword());  // Lấy mật khẩu từ client
+        
         try {
             partnerPort = Integer.parseInt(portField.getText());
         } catch (Exception e) {
@@ -68,10 +117,9 @@ public class App extends JFrame {
             return;
         }
 
-
-        // Khởi động client và hiển thị màn hình
+        // Gửi mật khẩu cùng với kết nối đến server
         EventQueue.invokeLater(() -> {
-            RemoteDesktopClient client = new RemoteDesktopClient(partnerIp, partnerPort);
+            RemoteDesktopClient client = new RemoteDesktopClient(partnerIp, partnerPort, password);  // Thêm mật khẩu vào client
             JFrame screenFrame = client.getScreenFrame();
             screenFrame.setVisible(true);
 
@@ -85,7 +133,6 @@ public class App extends JFrame {
             });
         });
     }
-
 
     public static void main(String[] args) throws Exception {
         EventQueue.invokeLater(() -> {

@@ -1,4 +1,3 @@
-
 import java.awt.Rectangle;
 import java.awt.Robot;
 import java.awt.Toolkit;
@@ -10,24 +9,31 @@ import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import javax.imageio.ImageIO;
 
-
 public class RemoteDesktopServer extends UnicastRemoteObject implements RemoteDesktopInterface {
     private Robot robot;
-    protected  RemoteDesktopServer() throws RemoteException {
+    private String serverPassword; // Thêm biến lưu trữ mật khẩu
+    
+    protected RemoteDesktopServer(String password) throws RemoteException {
         super();
+        this.serverPassword = password; // Gán mật khẩu cho server
         try {
             robot = new Robot();
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
-    
+
+    // Phương thức để xác thực mật khẩu
+    public boolean authenticate(String password) {
+        return this.serverPassword.equals(password);
+    }
+
     @Override
     public byte[] captureScreen() throws RemoteException {
         try {
             Rectangle screenRect = new Rectangle(Toolkit.getDefaultToolkit().getScreenSize());
             BufferedImage screenCapture = robot.createScreenCapture(screenRect);
-            
+
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
             ImageIO.write(screenCapture, "JPEG", outputStream);
 
@@ -45,27 +51,25 @@ public class RemoteDesktopServer extends UnicastRemoteObject implements RemoteDe
 
     @Override
     public void clickMouse(int button) throws RemoteException {
-        // Nhấn và nhả nút chuột
         robot.mousePress(button);
         robot.mouseRelease(button);
     }
 
     @Override
     public void typeKey(int keyCode) throws RemoteException {
-        // Nhấn và nhả phím với mã phím (keyCode) cụ thể
         robot.keyPress(keyCode);
         robot.keyRelease(keyCode);
     }
 
     @Override
     public void scrollMouse(int scrollAmount) throws RemoteException {
-        // Lăn chuột: scrollAmount là số bước lăn, có thể âm hoặc dương
         robot.mouseWheel(scrollAmount);
     }
 
-    public static void startServer(int port){
+    // Phương thức khởi động server
+    public static void startServer(int port, String password) {
         try {
-            RemoteDesktopServer server = new RemoteDesktopServer();
+            RemoteDesktopServer server = new RemoteDesktopServer(password);
             Registry registry = LocateRegistry.createRegistry(port);
             registry.rebind("RemoteDesktop", server);
             System.out.println("Server started on port " + port);

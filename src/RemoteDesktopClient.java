@@ -1,4 +1,3 @@
-
 import java.awt.BorderLayout;
 import java.awt.Toolkit;
 import java.awt.event.InputEvent;
@@ -10,6 +9,7 @@ import java.awt.event.MouseMotionAdapter;
 import java.awt.event.MouseWheelListener;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
+import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import javax.imageio.ImageIO;
@@ -18,20 +18,28 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.SwingUtilities;
 
-
 public class RemoteDesktopClient {
     private RemoteDesktopInterface remoteDesktop;
     private JFrame screenFrame;
     private JLabel screenLabel;
-    
-    
-    public RemoteDesktopClient(String serverIp, int serverPort) {
+    private String password;  // Trường lưu mật khẩu
+
+    public RemoteDesktopClient(String serverIp, int serverPort, String password) {
+        this.password = password;  // Lưu mật khẩu
+
         try {
+            // Kết nối đến registry RMI với server
             Registry registry = LocateRegistry.getRegistry(serverIp, serverPort);
             remoteDesktop = (RemoteDesktopInterface) registry.lookup("RemoteDesktop");
+
+            // Kiểm tra mật khẩu
+            if (!authenticate(password)) {
+                throw new Exception("Authentication failed: Invalid password.");
+            }
+
             System.out.println("Connected to server at " + serverIp + ":" + serverPort);
 
-            // Tạo frame hiển thị màn hình từ server
+            // Tạo frame hiển thị màn hình từ server
             screenFrame = new JFrame("Remote Desktop - Screen View");
             screenFrame.setSize(Toolkit.getDefaultToolkit().getScreenSize());
             screenFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -39,10 +47,6 @@ public class RemoteDesktopClient {
             screenLabel = new JLabel();
             screenFrame.add(screenLabel, BorderLayout.CENTER);
 
-            
-            // Cập nhật màn hình
-            // Timer timer = new Timer(100, e -> updateScreen());
-            // timer.start();
             // Chạy cập nhật màn hình trên một luồng riêng
             new Thread(() -> {
                 while (true) {
@@ -55,7 +59,6 @@ public class RemoteDesktopClient {
                 }
             }).start();
 
-            
             screenLabel.addMouseMotionListener(new MouseMotionAdapter() {
                 @Override
                 public void mouseMoved(MouseEvent e) {
@@ -68,7 +71,7 @@ public class RemoteDesktopClient {
                     }
                 }
             });
-            
+
             screenLabel.addMouseListener(new MouseAdapter() {
                 @Override
                 public void mouseClicked(MouseEvent e) {
@@ -97,7 +100,6 @@ public class RemoteDesktopClient {
                 }
             });
 
-
             // Sự kiện lăn chuột
             screenLabel.addMouseWheelListener((MouseWheelListener) e -> {
                 try {
@@ -108,13 +110,22 @@ public class RemoteDesktopClient {
                     ex.printStackTrace();
                 }
             });
-            
 
         } catch (Exception e) {
             e.printStackTrace();
         }
-        
     }
+
+    // Phương thức xác thực mật khẩu
+   private boolean authenticate(String password) {
+    try {
+        // Kiểm tra mật khẩu với server
+        return remoteDesktop != null && remoteDesktop.authenticate(password);
+    } catch (RemoteException e) {
+        e.printStackTrace();
+        return false;  // Trả về false nếu có lỗi kết nối hoặc ngoại lệ
+    }
+}
 
     public JFrame getScreenFrame() {
         return screenFrame;
@@ -129,22 +140,22 @@ public class RemoteDesktopClient {
     public void updateScreen() {
         try {
             if (remoteDesktop != null) {
-                 byte[] screenData = remoteDesktop.captureScreen();
-                 if (screenData != null) {
-                     BufferedImage image = ImageIO.read(new ByteArrayInputStream(screenData));
-                     if (image != null) {
-                         SwingUtilities.invokeLater(() -> {
+                byte[] screenData = remoteDesktop.captureScreen();
+                if (screenData != null) {
+                    BufferedImage image = ImageIO.read(new ByteArrayInputStream(screenData));
+                    if (image != null) {
+                        SwingUtilities.invokeLater(() -> {
                             screenLabel.setIcon(new ImageIcon(image));
                         });
-                     } else {
-                         System.out.println("Failed to decode screen data to image.");
-                     }
-                 } else {
-                     System.out.println("Received null screen data.");
-                 }
+                    } else {
+                        System.out.println("Failed to decode screen data to image.");
+                    }
+                } else {
+                    System.out.println("Received null screen data.");
+                }
             }
         } catch (Exception e) {
-             e.printStackTrace();
+            e.printStackTrace();
         }
-     }
+    }
 }
