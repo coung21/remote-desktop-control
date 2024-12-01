@@ -3,7 +3,6 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-
 import javax.swing.*;
 import javax.swing.plaf.basic.BasicTabbedPaneUI;
 
@@ -15,6 +14,10 @@ public class App extends JFrame {
     private JTextField serverPortField;
     private JPasswordField serverPasswordField;  // Thêm ô nhập password cho server
     private int serverPort;
+    private ServerSocket serverSocket;
+    private Socket socketClient;
+    private JFrame serverChatFrame;
+    private JFrame clientChatFrame;
 
     public App() {
         setTitle("Remote Desktop Control App");
@@ -110,11 +113,12 @@ public class App extends JFrame {
         new Thread(() -> {
             try {
                 // Khởi động SocketServer và mở Chat Frame
-                ServerSocket serverSocket = new ServerSocket(serverPort + 1); // Cổng +1 để tránh trùng cổng với remote desktop
+                serverSocket = new ServerSocket(serverPort + 1); // Cổng +1 để tránh trùng cổng với remote desktop
                 Socket socket = serverSocket.accept();
                 SwingUtilities.invokeLater(() -> {
                     try {
-                        new ChatFrame("Server Chat", socket).setVisible(true);
+                       serverChatFrame = new ChatFrame("Server Chat", socket);
+                       serverChatFrame.setVisible(true);
                     } catch (IOException e1) {
                         e1.printStackTrace();
                     }
@@ -187,10 +191,11 @@ private void connectToServer() {
                 });
 
                 // Khởi động SocketClient để chat (mở Frame Chat)
-                Socket socketClient = new Socket(partnerIp, partnerPort + 1);  // Cổng +1 để tránh trùng cổng với server
+                socketClient = new Socket(partnerIp, partnerPort + 1);  // Cổng +1 để tránh trùng cổng với server
                 SwingUtilities.invokeLater(() -> {
                     try {
-                        new ChatFrame("Client Chat", socketClient).setVisible(true);
+                        clientChatFrame = new ChatFrame("Client Chat", socketClient);
+                        clientChatFrame.setVisible(true);
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
