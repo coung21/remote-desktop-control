@@ -35,7 +35,7 @@ public class RemoteDesktopServer extends UnicastRemoteObject implements RemoteDe
             BufferedImage screenCapture = robot.createScreenCapture(screenRect);
 
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-            ImageIO.write(screenCapture, "JPEG", outputStream);
+            ImageIO.write(screenCapture, "PNG", outputStream);
 
             return outputStream.toByteArray();
         } catch (Exception e) {

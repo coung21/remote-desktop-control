@@ -20,6 +20,7 @@ public class App extends JFrame {
         // Tạo một JTabbedPane để chuyển đổi giữa client và server
         JTabbedPane tabbedPane = new JTabbedPane();
         
+        
         // Giao diện server
         JPanel serverPanel = createServerPanel();
         tabbedPane.addTab("Server", serverPanel);
@@ -27,6 +28,10 @@ public class App extends JFrame {
         // Giao diện client
         JPanel clientPanel = createClientPanel();
         tabbedPane.addTab("Client", clientPanel);
+
+       
+        tabbedPane.setForegroundAt(0, Color.BLUE); // Màu chữ của tab "Server"
+        tabbedPane.setForegroundAt(1, Color.RED);  // Màu chữ của tab "Client"
 
         add(tabbedPane);
     }
