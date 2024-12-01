@@ -1,6 +1,7 @@
 import java.awt.*;
 import java.net.InetAddress;
 import javax.swing.*;
+import javax.swing.plaf.basic.BasicTabbedPaneUI;
 
 public class App extends JFrame {
 
@@ -20,6 +21,26 @@ public class App extends JFrame {
         // Tạo một JTabbedPane để chuyển đổi giữa client và server
         JTabbedPane tabbedPane = new JTabbedPane();
         
+
+        tabbedPane.setUI(new BasicTabbedPaneUI() {
+                @Override
+                protected void installDefaults() {
+                    super.installDefaults();
+                    // Không thay đổi layout chính của tabbedPane
+                }
+
+
+                @Override
+                protected void paintTabBackground(Graphics g, int tabPlacement, int tabIndex, int x, int y, int w, int h, boolean isSelected) {
+                    super.paintTabBackground(g, tabPlacement, tabIndex, x, y, w, h, isSelected);
+                    if (isSelected) {
+                        g.setColor(new Color(0, 123, 255)); // Màu nền khi tab được chọn
+                    } else {
+                        g.setColor(new Color(240, 240, 240)); // Màu nền khi tab không được chọn
+                    }
+                    g.fillRoundRect(x, y, w, h, 10, 10); // Viền bo góc cho tab
+                }
+            });
         
         // Giao diện server
         JPanel serverPanel = createServerPanel();
@@ -30,8 +51,8 @@ public class App extends JFrame {
         tabbedPane.addTab("Client", clientPanel);
 
        
-        tabbedPane.setForegroundAt(0, Color.BLUE); // Màu chữ của tab "Server"
-        tabbedPane.setForegroundAt(1, Color.RED);  // Màu chữ của tab "Client"
+        // tabbedPane.setForegroundAt(0, Color.BLUE); // Màu chữ của tab "Server"
+        // tabbedPane.setForegroundAt(1, Color.RED);  // Màu chữ của tab "Client"
 
         add(tabbedPane);
     }
