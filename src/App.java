@@ -1,5 +1,9 @@
 import java.awt.*;
+import java.io.IOException;
 import java.net.InetAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
+
 import javax.swing.*;
 import javax.swing.plaf.basic.BasicTabbedPaneUI;
 
@@ -58,53 +62,73 @@ public class App extends JFrame {
     }
 
     private JPanel createServerPanel() {
-        JPanel panel = new JPanel();
-        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+    JPanel panel = new JPanel();
+    panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 
-        // Hiển thị ip và port của máy local
-        String localIp = "localhost";
-        try {
-            localIp = InetAddress.getLocalHost().getHostAddress();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        JLabel ipLabel = new JLabel("Your IP: " + localIp);
-        JLabel portLabel = new JLabel("Server Port: ");
-        JLabel passwordLabel = new JLabel("Password: ");
-        
-        // Trường nhập port và password cho server
-        serverPortField = new JTextField("5000");  // Giá trị mặc định là 5000
-        serverPasswordField = new JPasswordField();
-
-        panel.add(ipLabel);
-        panel.add(portLabel);
-        panel.add(serverPortField);
-        panel.add(passwordLabel);
-        panel.add(serverPasswordField);
-
-        // Khởi động server
-        JButton startServerButton = new JButton("Start Server");
-        startServerButton.addActionListener(e -> {
-            String password = new String(serverPasswordField.getPassword());
-            if (password.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Password cannot be empty", "Error", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-            try {
-                serverPort = Integer.parseInt(serverPortField.getText());
-            } catch (NumberFormatException ex) {
-                JOptionPane.showMessageDialog(this, "Invalid port number", "Error", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-            new Thread(() -> {
-                RemoteDesktopServer.startServer(serverPort, password); // Gửi mật khẩu khi khởi động server
-            }).start();
-        });
-        panel.add(startServerButton);
-
-        return panel;
+    String localIp = "localhost";
+    try {
+        localIp = InetAddress.getLocalHost().getHostAddress();
+    } catch (Exception e) {
+        e.printStackTrace();
     }
+
+    JLabel ipLabel = new JLabel("Your IP: " + localIp);
+    JLabel portLabel = new JLabel("Server Port: ");
+    JLabel passwordLabel = new JLabel("Password: ");
+
+    serverPortField = new JTextField("5000");  // Giá trị mặc định là 5000
+    serverPasswordField = new JPasswordField();
+
+    panel.add(ipLabel);
+    panel.add(portLabel);
+    panel.add(serverPortField);
+    panel.add(passwordLabel);
+    panel.add(serverPasswordField);
+
+    // Khởi động server
+    JButton startServerButton = new JButton("Start Server");
+    startServerButton.addActionListener(e -> {
+        String password = new String(serverPasswordField.getPassword());
+        if (password.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Password cannot be empty", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        try {
+            serverPort = Integer.parseInt(serverPortField.getText());
+        } catch (NumberFormatException ex) {
+            JOptionPane.showMessageDialog(this, "Invalid port number", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        new Thread(() -> {
+            try {
+                RemoteDesktopServer.startServer(serverPort, password);
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }).start();
+
+        new Thread(() -> {
+            try {
+                // Khởi động SocketServer và mở Chat Frame
+                ServerSocket serverSocket = new ServerSocket(serverPort + 1); // Cổng +1 để tránh trùng cổng với remote desktop
+                Socket socket = serverSocket.accept();
+                SwingUtilities.invokeLater(() -> {
+                    try {
+                        new ChatFrame("Server Chat", socket).setVisible(true);
+                    } catch (IOException e1) {
+                        e1.printStackTrace();
+                    }
+                });
+            } catch (IOException ex) {
+                JOptionPane.showMessageDialog(this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }).start();
+    });
+
+    panel.add(startServerButton);
+    return panel;
+}
+
 
     private JPanel createClientPanel() {
         JPanel panel = new JPanel();
@@ -131,34 +155,63 @@ public class App extends JFrame {
     }
 
     // Phương thức kết nối với server của partner
-    private void connectToServer() {
-        String partnerIp = ipField.getText();
-        int partnerPort;
-        String password = new String(passwordField.getPassword());  // Lấy mật khẩu từ client
-        
-        try {
-            partnerPort = Integer.parseInt(portField.getText());
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Invalid port number", "Error", JOptionPane.ERROR_MESSAGE);
-            return;
+private void connectToServer() {
+    String partnerIp = ipField.getText();
+    int partnerPort;
+    String password = new String(passwordField.getPassword());  // Lấy mật khẩu từ client
+
+    try {
+        partnerPort = Integer.parseInt(portField.getText());
+    } catch (Exception e) {
+        JOptionPane.showMessageDialog(this, "Invalid port number", "Error", JOptionPane.ERROR_MESSAGE);
+        return;
+    }
+
+    // Đảm bảo kết nối client được thực hiện trong một luồng riêng
+    SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
+        @Override
+        protected Void doInBackground() throws Exception {
+            try {
+                // Tạo và khởi tạo RemoteDesktopClient
+                RemoteDesktopClient client = new RemoteDesktopClient(partnerIp, partnerPort, password);  
+                JFrame screenFrame = client.getScreenFrame();
+                screenFrame.setVisible(true);
+
+                // Đóng kết nối khi đóng
+                screenFrame.addWindowListener(new java.awt.event.WindowAdapter() {
+                    @Override
+                    public void windowClosing(java.awt.event.WindowEvent windowEvent) {
+                        client.disconnect();
+                        System.out.println("Disconnected from partner's server");
+                    }
+                });
+
+                // Khởi động SocketClient để chat (mở Frame Chat)
+                Socket socketClient = new Socket(partnerIp, partnerPort + 1);  // Cổng +1 để tránh trùng cổng với server
+                SwingUtilities.invokeLater(() -> {
+                    try {
+                        new ChatFrame("Client Chat", socketClient).setVisible(true);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                });
+
+            } catch (Exception e) {
+                SwingUtilities.invokeLater(() -> {
+                    JOptionPane.showMessageDialog(App.this, e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                });
+            }
+            return null;
         }
 
-        // Gửi mật khẩu cùng với kết nối đến server
-        EventQueue.invokeLater(() -> {
-            RemoteDesktopClient client = new RemoteDesktopClient(partnerIp, partnerPort, password);  // Thêm mật khẩu vào client
-            JFrame screenFrame = client.getScreenFrame();
-            screenFrame.setVisible(true);
+        @Override
+        protected void done() {
+            System.out.println("Connection process completed.");
+        }
+    };
 
-            // Đóng kết nối khi đóng
-            screenFrame.addWindowListener(new java.awt.event.WindowAdapter() {
-                @Override
-                public void windowClosing(java.awt.event.WindowEvent windowEvent) {
-                    client.disconnect();
-                    System.out.println("Disconnected from partner's server");
-                }
-            });
-        });
-    }
+    worker.execute();
+}
 
     public static void main(String[] args) throws Exception {
         EventQueue.invokeLater(() -> {
