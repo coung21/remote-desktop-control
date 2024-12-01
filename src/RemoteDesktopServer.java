@@ -1,6 +1,4 @@
-import java.awt.Rectangle;
-import java.awt.Robot;
-import java.awt.Toolkit;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.rmi.RemoteException;
@@ -8,22 +6,24 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import javax.imageio.ImageIO;
+import java.util.concurrent.LinkedBlockingQueue;
 
 public class RemoteDesktopServer extends UnicastRemoteObject implements RemoteDesktopInterface {
     private Robot robot;
-    private String serverPassword; // Thêm biến lưu trữ mật khẩu
-    
+    private String serverPassword;
+    private LinkedBlockingQueue<String> chatQueue; // Hàng đợi chat
+
     protected RemoteDesktopServer(String password) throws RemoteException {
         super();
-        this.serverPassword = password; // Gán mật khẩu cho server
+        this.serverPassword = password;
         try {
             robot = new Robot();
+            chatQueue = new LinkedBlockingQueue<>();
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    // Phương thức để xác thực mật khẩu
     public boolean authenticate(String password) {
         return this.serverPassword.equals(password);
     }
@@ -66,7 +66,16 @@ public class RemoteDesktopServer extends UnicastRemoteObject implements RemoteDe
         robot.mouseWheel(scrollAmount);
     }
 
-    // Phương thức khởi động server
+    @Override
+    public void sendMessage(String message) throws RemoteException {
+        chatQueue.offer(message); // Thêm tin nhắn vào hàng đợi
+    }
+
+    @Override
+    public String receiveMessage() throws RemoteException {
+        return chatQueue.poll(); // Lấy tin nhắn từ hàng đợi (nếu có)
+    }
+
     public static void startServer(int port, String password) {
         try {
             RemoteDesktopServer server = new RemoteDesktopServer(password);

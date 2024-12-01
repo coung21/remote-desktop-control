@@ -10,5 +10,9 @@ public interface RemoteDesktopInterface extends Remote {
     void scrollMouse(int scrollAmount) throws RemoteException;
 
     // Phương thức xác thực mật khẩu
-    boolean authenticate(String password) throws RemoteException;  // Thêm phương thức xác thực mật khẩu
+    boolean authenticate(String password) throws RemoteException;
+
+    // Phương thức chat (gửi và nhận tin nhắn)
+    void sendMessage(String message) throws RemoteException;
+    String receiveMessage() throws RemoteException;
 }

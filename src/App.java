@@ -12,6 +12,11 @@ public class App extends JFrame {
     private JPasswordField serverPasswordField;  // Thêm ô nhập password cho server
     private int serverPort;
 
+    // Các phần tử giao diện chat
+    private JTextArea chatArea;
+    private JTextField chatInputField;
+    private JButton sendButton;
+
     public App() {
         setTitle("Remote Desktop Control App");
         setSize(800, 450);
@@ -20,27 +25,24 @@ public class App extends JFrame {
         
         // Tạo một JTabbedPane để chuyển đổi giữa client và server
         JTabbedPane tabbedPane = new JTabbedPane();
-        
-
         tabbedPane.setUI(new BasicTabbedPaneUI() {
-                @Override
-                protected void installDefaults() {
-                    super.installDefaults();
-                    // Không thay đổi layout chính của tabbedPane
-                }
+            @Override
+            protected void installDefaults() {
+                super.installDefaults();
+                // Không thay đổi layout chính của tabbedPane
+            }
 
-
-                @Override
-                protected void paintTabBackground(Graphics g, int tabPlacement, int tabIndex, int x, int y, int w, int h, boolean isSelected) {
-                    super.paintTabBackground(g, tabPlacement, tabIndex, x, y, w, h, isSelected);
-                    if (isSelected) {
-                        g.setColor(new Color(0, 123, 255)); // Màu nền khi tab được chọn
-                    } else {
-                        g.setColor(new Color(240, 240, 240)); // Màu nền khi tab không được chọn
-                    }
-                    g.fillRoundRect(x, y, w, h, 10, 10); // Viền bo góc cho tab
+            @Override
+            protected void paintTabBackground(Graphics g, int tabPlacement, int tabIndex, int x, int y, int w, int h, boolean isSelected) {
+                super.paintTabBackground(g, tabPlacement, tabIndex, x, y, w, h, isSelected);
+                if (isSelected) {
+                    g.setColor(new Color(0, 123, 255)); // Màu nền khi tab được chọn
+                } else {
+                    g.setColor(new Color(240, 240, 240)); // Màu nền khi tab không được chọn
                 }
-            });
+                g.fillRoundRect(x, y, w, h, 10, 10); // Viền bo góc cho tab
+            }
+        });
         
         // Giao diện server
         JPanel serverPanel = createServerPanel();
@@ -49,10 +51,6 @@ public class App extends JFrame {
         // Giao diện client
         JPanel clientPanel = createClientPanel();
         tabbedPane.addTab("Client", clientPanel);
-
-       
-        // tabbedPane.setForegroundAt(0, Color.BLUE); // Màu chữ của tab "Server"
-        // tabbedPane.setForegroundAt(1, Color.RED);  // Màu chữ của tab "Client"
 
         add(tabbedPane);
     }
@@ -126,7 +124,26 @@ public class App extends JFrame {
         JButton connectButton = new JButton("Connect");
         connectButton.addActionListener(e -> connectToServer());
         panel.add(connectButton);
-        
+
+        // Thêm phần chat
+        panel.add(new JLabel("Chat with partner:"));
+        chatArea = new JTextArea(5, 20);
+        chatArea.setEditable(false);
+        chatArea.setLineWrap(true);
+        JScrollPane chatScrollPane = new JScrollPane(chatArea);
+        panel.add(chatScrollPane);
+
+        chatInputField = new JTextField(20);
+        sendButton = new JButton("Send");
+        sendButton.addActionListener(e -> sendChatMessage());
+
+        JPanel chatPanel = new JPanel();
+        chatPanel.setLayout(new BorderLayout());
+        chatPanel.add(chatInputField, BorderLayout.CENTER);
+        chatPanel.add(sendButton, BorderLayout.EAST);
+
+        panel.add(chatPanel);
+
         return panel;
     }
 
@@ -158,6 +175,16 @@ public class App extends JFrame {
                 }
             });
         });
+    }
+
+    // Phương thức gửi tin nhắn trong chat
+    private void sendChatMessage() {
+        String message = chatInputField.getText();
+        if (!message.isEmpty()) {
+            chatArea.append("Me: " + message + "\n");
+            chatInputField.setText("");
+            // Gửi tin nhắn cho server qua RMI (chưa tích hợp phương thức gửi)
+        }
     }
 
     public static void main(String[] args) throws Exception {
