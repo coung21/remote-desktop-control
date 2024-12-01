@@ -59,6 +59,7 @@ public class RemoteDesktopClient {
             new Thread(() -> {
                 while (true) {
                     updateScreen();
+                    updateChat();
                     try {
                         Thread.sleep(100); // Cập nhật mỗi 100ms (10 lần mỗi giây)
                     } catch (InterruptedException e) {
