@@ -199,6 +199,11 @@ public class App extends JFrame {
                     RemoteDesktopClient client = new RemoteDesktopClient(partnerIp, partnerPort, password);
                     JFrame screenFrame = client.getScreenFrame();
                     screenFrame.setVisible(true);
+                    Insets insets = screenFrame.getInsets(); // Lấy thông tin về viền và thanh tiêu đề
+                    screenFrame.setSize(
+                        screenFrame.getWidth(),
+                        screenFrame.getHeight() + insets.top
+                    );
 
                     // Đóng kết nối khi đóng
                     screenFrame.addWindowListener(new java.awt.event.WindowAdapter() {
