@@ -1,4 +1,5 @@
 import java.awt.*;
+import java.awt.event.WindowAdapter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.InetAddress;
@@ -47,6 +48,9 @@ public class App extends JFrame {
                 }
                 g.fillRoundRect(x, y, w, h, 10, 10); // Viền bo góc cho tab
             }
+
+            
+
         });
 
         // Giao diện server
@@ -61,6 +65,21 @@ public class App extends JFrame {
         // tabbedPane.setForegroundAt(1, Color.RED); // Màu chữ của tab "Client"
 
         add(tabbedPane);
+
+
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(java.awt.event.WindowEvent windowEvent) {
+                try {
+                    if (serverSocket != null && !serverSocket.isClosed()) {
+                        serverSocket.close();
+                        System.out.println("serverSocket closed");
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
     }
 
     private JPanel createServerPanel() {
@@ -113,15 +132,17 @@ public class App extends JFrame {
                 try {
                     // Khởi động SocketServer và mở Chat Frame
                     serverSocket = new ServerSocket(serverPort + 1); // Cổng +1 để tránh trùng cổng với remote desktop
-                    Socket socket = serverSocket.accept();
-                    SwingUtilities.invokeLater(() -> {
-                        try {
-                            serverChatFrame = new ChatFrame("Server Chat", socket);
-                            serverChatFrame.setVisible(true);
-                        } catch (IOException e1) {
-                            e1.printStackTrace();
-                        }
-                    });
+                    while (true) {
+                        Socket socket = serverSocket.accept();
+                        SwingUtilities.invokeLater(() -> {
+                            try {
+                                JFrame newServerChatFrame = new ChatFrame("Server Chat", socket);
+                                newServerChatFrame.setVisible(true);
+                            } catch (IOException e1) {
+                                e1.printStackTrace();
+                            }
+                        });
+                    }
                 } catch (IOException ex) {
                     JOptionPane.showMessageDialog(this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
                 }

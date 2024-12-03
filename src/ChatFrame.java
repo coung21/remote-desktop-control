@@ -55,7 +55,7 @@ public class ChatFrame extends JFrame {
                     if (message.equals("CLOSE_CONNECTION")) {
                         chatArea.append("Partner has left the chat.\n");
                         // Đóng socket
-                        socket.close();
+                        // socket.close();
     
                         // Đóng cửa sổ chat
                         SwingUtilities.invokeLater(() -> {
