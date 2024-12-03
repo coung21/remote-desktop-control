@@ -40,23 +40,38 @@ public class ChatFrame extends JFrame {
     // Đọc tin nhắn từ socket
     private class ReadMessages implements Runnable {
         private BufferedReader in;
-
+        private Socket socket;
+    
         public ReadMessages(Socket socket) throws IOException {
             this.in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            this.socket = socket;
         }
-
+    
         @Override
         public void run() {
             try {
                 String message;
                 while ((message = in.readLine()) != null) {
-                    chatArea.append("Partner: " + message + "\n");
+                    if (message.equals("CLOSE_CONNECTION")) {
+                        chatArea.append("Partner has left the chat.\n");
+                        // Đóng socket
+                        socket.close();
+    
+                        // Đóng cửa sổ chat
+                        SwingUtilities.invokeLater(() -> {
+                            ChatFrame.this.dispose();
+                        });
+                        break;
+                    } else {
+                        chatArea.append("Partner: " + message + "\n");
+                    }
                 }
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
     }
+    
 
     // Gửi tin nhắn khi nhấn Enter
     private void sendMessage() {
