@@ -187,6 +187,13 @@ private void connectToServer() {
                     public void windowClosing(java.awt.event.WindowEvent windowEvent) {
                         client.disconnect();
                         System.out.println("Disconnected from partner's server");
+                        if (socketClient != null) {
+                            try {
+                                socketClient.close();
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                        }
                     }
                 });
 
