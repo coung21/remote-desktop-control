@@ -21,6 +21,11 @@ public class App extends JFrame {
     private JFrame serverChatFrame;
     private JFrame clientChatFrame;
 
+    // Các phần tử giao diện chat
+    private JTextArea chatArea;
+    private JTextField chatInputField;
+    private JButton sendButton;
+
     public App() {
         setTitle("Remote Desktop Control App");
         setSize(800, 450);
@@ -29,7 +34,6 @@ public class App extends JFrame {
 
         // Tạo một JTabbedPane để chuyển đổi giữa client và server
         JTabbedPane tabbedPane = new JTabbedPane();
-
         tabbedPane.setUI(new BasicTabbedPaneUI() {
             @Override
             protected void installDefaults() {
@@ -51,9 +55,7 @@ public class App extends JFrame {
                     g.setColor(new Color(240, 240, 240)); // Màu nền khi tab không được chọn
                 }
                 g.fillRoundRect(x, y, w, h, 10, 10); // Viền bo góc cho tab
-            }
-
-            
+            }           
 
         });
 
@@ -260,7 +262,6 @@ public class App extends JFrame {
     
         connectButton.addActionListener(e -> connectToServer());
         panel.add(connectButton);
-    
         return panel;
     }
     
@@ -355,6 +356,16 @@ public class App extends JFrame {
         };
 
         worker.execute();
+    }
+
+    // Phương thức gửi tin nhắn trong chat
+    private void sendChatMessage() {
+        String message = chatInputField.getText();
+        if (!message.isEmpty()) {
+            chatArea.append("Me: " + message + "\n");
+            chatInputField.setText("");
+            // Gửi tin nhắn cho server qua RMI (chưa tích hợp phương thức gửi)
+        }
     }
 
     public static void main(String[] args) throws Exception {
