@@ -42,7 +42,11 @@ public class App extends JFrame {
                     boolean isSelected) {
                 super.paintTabBackground(g, tabPlacement, tabIndex, x, y, w, h, isSelected);
                 if (isSelected) {
-                    g.setColor(new Color(0, 123, 255)); // Màu nền khi tab được chọn
+                    if (tabIndex == 0) {
+                        g.setColor(new Color(76, 175, 80)); // Màu nền khi tab "Server" được chọn
+                    } else {
+                        g.setColor(new Color(0, 123, 255)); // Màu nền khi tab "Client" được chọn
+                    }
                 } else {
                     g.setColor(new Color(240, 240, 240)); // Màu nền khi tab không được chọn
                 }
@@ -85,29 +89,67 @@ public class App extends JFrame {
     private JPanel createServerPanel() {
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-
+        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20)); // Thêm khoảng cách xung quanh
+        panel.setBackground(new Color(247, 249, 252)); // Nền nhạt
+    
         String localIp = "localhost";
         try {
             localIp = InetAddress.getLocalHost().getHostAddress();
         } catch (Exception e) {
             e.printStackTrace();
         }
-
+    
+        // Tiêu đề
+        JLabel titleLabel = new JLabel("Server Configuration");
+        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 24));
+        titleLabel.setForeground(new Color(76, 175, 80)); // Màu xanh lá
+        titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        panel.add(titleLabel);
+    
+        panel.add(Box.createRigidArea(new Dimension(0, 20))); // Khoảng cách sau tiêu đề
+    
+        // IP Address
         JLabel ipLabel = new JLabel("Your IP: " + localIp);
-        JLabel portLabel = new JLabel("Server Port: ");
-        JLabel passwordLabel = new JLabel("Password: ");
-
-        serverPortField = new JTextField("5000"); // Giá trị mặc định là 5000
-        serverPasswordField = new JPasswordField();
-
+        ipLabel.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+        ipLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         panel.add(ipLabel);
+    
+        panel.add(Box.createRigidArea(new Dimension(0, 10))); // Khoảng cách
+    
+        // Server Port
+        JLabel portLabel = new JLabel("Server Port:");
+        portLabel.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+        portLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         panel.add(portLabel);
+    
+        serverPortField = new JTextField("5000"); // Giá trị mặc định là 5000
+        serverPortField.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        serverPortField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
         panel.add(serverPortField);
+    
+        panel.add(Box.createRigidArea(new Dimension(0, 10))); // Khoảng cách
+    
+        // Password
+        JLabel passwordLabel = new JLabel("Password:");
+        passwordLabel.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+        passwordLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         panel.add(passwordLabel);
+    
+        serverPasswordField = new JPasswordField();
+        serverPasswordField.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        serverPasswordField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
         panel.add(serverPasswordField);
-
-        // Khởi động server
+    
+        panel.add(Box.createRigidArea(new Dimension(0, 20))); // Khoảng cách
+    
+        // Nút Start Server
         JButton startServerButton = new JButton("Start Server");
+        startServerButton.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        startServerButton.setBackground(new Color(76, 175, 80)); // Màu xanh lá
+        startServerButton.setForeground(Color.WHITE); // Chữ trắng
+        startServerButton.setFocusPainted(false);
+        startServerButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+    
         startServerButton.addActionListener(e -> {
             String password = new String(serverPasswordField.getPassword());
             if (password.isEmpty()) {
@@ -127,7 +169,7 @@ public class App extends JFrame {
                     JOptionPane.showMessageDialog(this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
                 }
             }).start();
-
+    
             new Thread(() -> {
                 try {
                     // Khởi động SocketServer và mở Chat Frame
@@ -148,34 +190,80 @@ public class App extends JFrame {
                 }
             }).start();
         });
-
+    
         panel.add(startServerButton);
+    
         return panel;
     }
-
+    
     private JPanel createClientPanel() {
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-
-        // Trường nhập IP và Port của partner
+        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20)); // Thêm khoảng cách xung quanh
+        panel.setBackground(new Color(247, 249, 252)); // Nền nhạt
+    
+        // Tiêu đề
+        JLabel titleLabel = new JLabel("Client Connection Settings");
+        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 24));
+        titleLabel.setForeground(new Color(33, 150, 243)); // Màu xanh dương
+        titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        panel.add(titleLabel);
+    
+        panel.add(Box.createRigidArea(new Dimension(0, 20))); // Khoảng cách sau tiêu đề
+    
+        // Partner's IP
+        JLabel ipLabel = new JLabel("Partner's IP:");
+        ipLabel.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+        ipLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        panel.add(ipLabel);
+    
         ipField = new JTextField();
-        portField = new JTextField();
-        passwordField = new JPasswordField(); // Thêm trường nhập password cho client
-
-        panel.add(new JLabel("Partner's IP: "));
+        ipField.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        ipField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
         panel.add(ipField);
-        panel.add(new JLabel("Partner's Port: "));
+    
+        panel.add(Box.createRigidArea(new Dimension(0, 10))); // Khoảng cách
+    
+        // Partner's Port
+        JLabel portLabel = new JLabel("Partner's Port:");
+        portLabel.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+        portLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        panel.add(portLabel);
+    
+        portField = new JTextField();
+        portField.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        portField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
         panel.add(portField);
-        panel.add(new JLabel("Server Password: ")); // Thêm label cho mật khẩu
+    
+        panel.add(Box.createRigidArea(new Dimension(0, 10))); // Khoảng cách
+    
+        // Server Password
+        JLabel passwordLabel = new JLabel("Server Password:");
+        passwordLabel.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+        passwordLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        panel.add(passwordLabel);
+    
+        passwordField = new JPasswordField();
+        passwordField.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        passwordField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
         panel.add(passwordField);
-
+    
+        panel.add(Box.createRigidArea(new Dimension(0, 20))); // Khoảng cách
+    
         // Nút Connect
         JButton connectButton = new JButton("Connect");
+        connectButton.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        connectButton.setBackground(new Color(33, 150, 243)); // Màu xanh dương
+        connectButton.setForeground(Color.WHITE); // Chữ trắng
+        connectButton.setFocusPainted(false);
+        connectButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+    
         connectButton.addActionListener(e -> connectToServer());
         panel.add(connectButton);
-
+    
         return panel;
     }
+    
 
     // Phương thức kết nối với server của partner
     private void connectToServer() {

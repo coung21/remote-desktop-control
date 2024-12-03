@@ -13,8 +13,8 @@ public class ChatFrame extends JFrame {
 
     public ChatFrame(String title, Socket socket) throws IOException {
         setTitle(title);
-        setSize(400, 400);
-
+        setSize(250, 400);
+        setUndecorated(true);
         // Thiết lập không cho đóng cửa sổ bằng nút "X"
         setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
 
@@ -27,7 +27,7 @@ public class ChatFrame extends JFrame {
         inputField.addActionListener(e -> sendMessage());
 
         // Nút collapse
-        collapseButton = new JButton("←");
+        collapseButton = new JButton("→");
         collapseButton.setFocusable(false);
         collapseButton.addActionListener(e -> toggleCollapse());
 
@@ -67,13 +67,13 @@ public class ChatFrame extends JFrame {
     private void toggleCollapse() {
         if (isCollapsed) {
             // Mở rộng khung chat
-            setSize(400, 400);
-            collapseButton.setText("←");
+            setSize(250, 400);
+            collapseButton.setText("→");
             isCollapsed = false;
         } else {
             // Thu nhỏ khung chat
-            setSize(50, 400); // Chỉ giữ lại một thanh nhỏ
-            collapseButton.setText("→");
+            setSize(30, 400); // Chỉ giữ lại một thanh nhỏ
+            collapseButton.setText("←");
             isCollapsed = true;
         }
 
